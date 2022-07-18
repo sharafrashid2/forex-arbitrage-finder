@@ -1,71 +1,10 @@
 # Foreign Exchange Arbitrage Finder
 
-The website can be found at the link below:
+This website was developed using React and can be found at the following link:
 https://sharafrashid2.github.io/forex-arbitrage-finder/
 
-## Available Scripts
+## About
 
-In the project directory, you can run:
+The purpose of this project is to look at currency exchange rates and find arbitrages in currency rates if any exist. To clarify, an arbitrage is the simultaneous purchase and sale of the same asset in different markets (in our case, different currencies) in order to profit from tiny differences in the asset's listed prices. The way this is done is through creating a graph where the vertices are the currencies and the edges are the exchange rates between currencies. Then, the Bellman-Ford algorithm is used to check for a negative weight cycle (this indicates that an arbitrage exists) and return the arbitrage path if one is found. Before using the Bellman-Ford algorithm though, each edge weight has to be modified to be the negative log of its actual exchange rate because normally in an arbitrage path, (for example, currency1->currency2 * currency2->currency3 * currency3->currency1) the product of the exchange rates in the cycle should be greater than 1. In the Bellman-Ford algorithm, a negative cycle (for example, x -> y -> z -> x) is one where the sum of the weights in the cycle is less than one. Thus, doing the operation described above allows Bellman-Ford to work on our graph.
 
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Note that only the top 35 most traded currencies are looked at (https://en.wikipedia.org/wiki/Template:Most_traded_currencies) and all exchange rate information is pulled from the Exchange Rates API which can be found at the following site: https://exchangeratesapi.io. To check for arbitrages, you need to first sign up for an API key (which has a free option) here and enter the key that you receive into this website. Also, the site can't be used for actual trading purposes since the Exchange Rates API does not update in real time but only daily.
