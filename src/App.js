@@ -1,13 +1,13 @@
 import './App.css';
 import axios from 'axios';
-import { Button, Card, Form, } from "react-bootstrap";
+import { Button, Card, Form, Table } from "react-bootstrap";
 import React, { useState } from 'react';
 
 const currencies = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF', 'CNY', 'HKD', 'NZD', 'SEK', 'KRW', 'SGD', 'NOK', 'MXN', 'INR', 'RUB', 'ZAR', 'TRY', 'BRL', 'TWD', 'DKK', 'PLN', 'THB', 'IDR', 'HUF', 'CZK', 'ILS', 'CLP', 'PHP', 'AED', 'COP', 'SAR', 'MYR', 'RON',]
 
 var today = new Date();
 const dd = String(today.getDate()).padStart(2, '0');
-const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+const mm = String(today.getMonth() + 1).padStart(2, '0'); 
 const yyyy = today.getFullYear();
 
 today = yyyy  + '-' + mm + '-' + dd;
@@ -53,6 +53,7 @@ function App() {
   const [apiKey, setApiKey] = useState("");
   const [date, setDate] = useState(today);
   const [result, setResult] = useState("Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date. You can get an API key from exchangeratesapi.io for free.");
+  const [graph, setGraph] = useState({});
   const [percentGain, setPercentGain] = useState("0")
 
   const bellmanFord = (Adj, start) => {
@@ -167,7 +168,6 @@ function App() {
       try {
         response = await getRequest(currency1, date, apiKey);
         const current = response.data.rates;
-        console.log(response.data)
         for (const currency2 of currencies) {
           var value = -Math.log(current[currency2]);
           value = value.toFixed(5);
@@ -190,10 +190,13 @@ function App() {
 
   // Function that displays a path if one exists once search button is pressed
   const onClick = async () => {
-    console.log("check", apiKey, date)
+    setGraph({});
+    console.log("check", apiKey, date);
     setResult("Searching for an arbitrage path...");
 
-    const adjacency_list = await getAdjacencyList(currencies, date, apiKey)
+    const adjacency_list = await getAdjacencyList(currencies, date, apiKey);
+    setGraph(adjacency_list);
+    console.log(graph);
 
     for (const key in adjacency_list) {
       for (const item of adjacency_list[key]) {
@@ -283,6 +286,46 @@ function App() {
           }
         </div>
       </Card>
+
+      {Object.keys(graph).length > 0 ?
+      <div>
+        <br></br>
+        <Card style={{width: '60%', margin: 'auto', textAlign: 'center', backgroundColor: '#3CB371', borderColor: '#3CB371', color: '#ffffff'}}>
+          <h3 style={{marginTop: '1%'}}>
+            Exchange Rates on {date} 
+          </h3>
+        </Card>
+        <Card style={{width: '60%', margin: 'auto', textAlign: 'center'}}>
+          <div style={{overflowY: 'scroll', overflowX: 'scroll', height: '40vh', width: '96%', margin: 'auto', marginTop: '2%', marginBottom: '2%', marginLeft: '2%', marginRight: '2%'}}>
+            <Table striped bordered hover style={{textAlign: 'center', margin: 'auto'}}>
+              <thead>
+                <tr>
+                  <th></th>
+                  {currencies.map((currency) => (
+                    <th><b>{currency}</b></th>
+                  ))}
+                </tr>
+              </thead>
+              {currencies.map((currency) => (
+                <tbody>
+                  <tr>
+                    <th><b>{currency}</b></th>
+                    {Object.keys(graph).length > 0 ?
+                    currencies.map((currency2) => (
+                      <th>{Math.exp(getWeight(graph, currency, currency2)).toFixed(3)}</th>
+                    ))
+                    : <th></th>
+                    }
+                  </tr>
+                </tbody>
+              ))}
+            </Table>
+          </div>
+        </Card>
+      </div>
+      :
+      console.log()
+      }
 
     </div>
   );
