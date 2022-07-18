@@ -52,7 +52,7 @@ const currency_info = {'USD': ['🇺🇸', 'United States Dollar'],
 function App() {
   const [apiKey, setApiKey] = useState("");
   const [date, setDate] = useState(today);
-  const [result, setResult] = useState("Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date.");
+  const [result, setResult] = useState("Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date. You can get an API key from exchangeratesapi.io for free.");
   const [percentGain, setPercentGain] = useState("0")
 
   const bellmanFord = (Adj, start) => {
@@ -84,10 +84,11 @@ function App() {
       }
     }
 
+    // Detecting if a negative cycle exists
+
     for (const u in Adj) {
       for (const v of Adj[u]) {
         if (distances[v[0]] - (distances[u] + v[1]) > 0) {
-            console.log(distances[v[0]] - (distances[u] + v[1]))
             let curr = v[0];
 
             for (let i = 0; i < V; i++) {
@@ -97,6 +98,7 @@ function App() {
             let cycle = [];
             let vertex = curr;
 
+            // Finding the path of the cycle once it is detected
             while (true) {
                 cycle.push(vertex);
                 if (vertex === curr && cycle.length > 1) {
@@ -114,6 +116,7 @@ function App() {
     return null;
   }
 
+  // Helper Function to get the weight between two nodes
   const getWeight = (graph, node1, node2) => {
     for (const item of graph[node1]) {
       if (item[0] === node2) {
@@ -124,6 +127,7 @@ function App() {
 
   }
 
+  // Helper Function to get the text output to display on website and also calculate percent profit from arbitrage
   const getOutput = (graph, cycle) => {
     let total = 0
     for (let i=0; i<(cycle.length-1); i++) {
@@ -146,6 +150,7 @@ function App() {
     return [res, total]
   }
 
+  // Helper Function to send request to Exchange Rates API
   const getRequest = async (currency, date, apiKey) => {
     return await axios.get("https://api.apilayer.com/exchangerates_data/" + date + "?base=" + currency,
       {
@@ -153,6 +158,7 @@ function App() {
       });
   }
 
+  // Helper Function to create an adjacency list from a list of all exchange rates
   const getAdjacencyList = async (currencies, date, apiKey) => {
     const adjacency_list = {}
     for (const currency1 of currencies) {
@@ -182,6 +188,7 @@ function App() {
 
   }
 
+  // Function that displays a path if one exists once search button is pressed
   const onClick = async () => {
     console.log("check", apiKey, date)
     setResult("Searching for an arbitrage path...");
@@ -266,7 +273,7 @@ function App() {
           </p>
           {result !== "Searching for an arbitrage path..." 
             && result !== "Either the date you entered or your API key is not valid. Please try again." 
-            && result !== "Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date." 
+            && result !== "Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date. You can get an API key from exchangeratesapi.io for free." 
             && result !== "Unfortunately, no arbitrage path between currencies could be found currently. Check back later!" ?
               <p style={{marginTop: '1%'}}>
                 By following this arbitrage path, you will gain {percentGain}% profit.
