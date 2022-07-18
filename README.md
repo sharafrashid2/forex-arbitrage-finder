@@ -1,6 +1,7 @@
-# Getting Started with Create React App
+# Foreign Exchange Arbitrage Finder
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The website can be found at the link below:
+https://sharafrashid2.github.io/forex-arbitrage-finder/
 
 ## Available Scripts
 
