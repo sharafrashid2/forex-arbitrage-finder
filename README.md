@@ -11,4 +11,4 @@ Note that only the top 35 most traded currencies are looked at (https://en.wikip
 
 ## Examples
 
-Arbitrages in foreign currency exchange doesn't happen frequently. To see this website find one, try the date, 2017-07-23.
+Arbitrages in foreign currency exchange don't happen frequently. To see this website find one, try the date, 2017-07-23.
