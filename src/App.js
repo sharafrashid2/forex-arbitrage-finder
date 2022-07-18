@@ -1,11 +1,17 @@
-import logo from './logo.svg';
-import Emoji from './components/Emoji';
 import './App.css';
 import axios from 'axios';
-import {Button, Card} from "react-bootstrap";
+import { Button, Card, Form, } from "react-bootstrap";
 import React, { useState } from 'react';
 
 const currencies = ['USD', 'EUR', 'JPY', 'GBP', 'AUD', 'CAD', 'CHF', 'CNY', 'HKD', 'NZD', 'SEK', 'KRW', 'SGD', 'NOK', 'MXN', 'INR', 'RUB', 'ZAR', 'TRY', 'BRL', 'TWD', 'DKK', 'PLN', 'THB', 'IDR', 'HUF', 'CZK', 'ILS', 'CLP', 'PHP', 'AED', 'COP', 'SAR', 'MYR', 'RON',]
+
+var today = new Date();
+const dd = String(today.getDate()).padStart(2, '0');
+const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+const yyyy = today.getFullYear();
+
+today = yyyy  + '-' + mm + '-' + dd;
+
 const currency_info = {'USD': ['🇺🇸', 'United States Dollar'], 
                  'EUR': ['🇪🇺', 'Euro'], 
                  'JPY': ['🇯🇵', 'Japanese Yen'], 
@@ -44,7 +50,10 @@ const currency_info = {'USD': ['🇺🇸', 'United States Dollar'],
 
 
 function App() {
-  const [result, setResult] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [date, setDate] = useState(today);
+  const [result, setResult] = useState("Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date.");
+  const [percentGain, setPercentGain] = useState("0")
 
   const bellmanFord = (Adj, start) => {
     // initialization
@@ -77,84 +86,128 @@ function App() {
 
     for (const u in Adj) {
       for (const v of Adj[u]) {
-        if (distances[v[0]] > distances[u] + v[1]) {
-          return [u, parents];
+        if (distances[v[0]] - (distances[u] + v[1]) > 0) {
+            console.log(distances[v[0]] - (distances[u] + v[1]))
+            let curr = v[0];
+
+            for (let i = 0; i < V; i++) {
+                curr = parents[curr];
+            }
+
+            let cycle = [];
+            let vertex = curr;
+
+            while (true) {
+                cycle.push(vertex);
+                if (vertex === curr && cycle.length > 1) {
+                    break;
+                }
+                vertex = parents[vertex];
+            }
+            if (cycle.length > 3) {
+              cycle = cycle.reverse();
+              return cycle;
+            }
         }
       }
     }
     return null;
   }
 
-  const getPath = (start, parent) => {
-    const path = [start];
-    let current = parent[start];
-
-    while (current !== start) {
-      path.push(current);
-      current = parent[current];
-    }
-
-    path.push(start);
-
-    let res = "";
-
-    for (let i=0; i<path.length; i++) {
-      if (i !== path.length - 1) {
-        res += (path[i] + " " + currency_info[path[i]] + " --> ");
-      }
-      else {
-        res += (path[i] + " " + currency_info[path[i]]);
+  const getWeight = (graph, node1, node2) => {
+    for (const item of graph[node1]) {
+      if (item[0] === node2) {
+        return item[1]
       }
     }
+    return null
 
-    return res;
   }
 
-  const getRequest = async (currency) => {
-    return await axios.get("https://api.apilayer.com/exchangerates_data/latest?base=" + currency,
+  const getOutput = (graph, cycle) => {
+    let total = 0
+    for (let i=0; i<(cycle.length-1); i++) {
+      total += getWeight(graph, cycle[i], cycle[i+1])
+    }
+
+    total *= -1
+    total = (Math.exp(total) - 1) * 100
+    total = total.toFixed(3)
+
+    let res = ""
+    for (let i=0; i<(cycle.length); i++) {
+      if (i !== cycle.length-1) {
+        res += cycle[i] + " " + currency_info[cycle[i]][0] + " --> "
+      }
+      else {
+        res += cycle[i] + " " + currency_info[cycle[i]][0]
+      }
+    }
+    return [res, total]
+  }
+
+  const getRequest = async (currency, date, apiKey) => {
+    return await axios.get("https://api.apilayer.com/exchangerates_data/" + date + "?base=" + currency,
       {
-        headers: {'apikey': "JxoI8AwWbK0gKgVJ3BUlPYEoQKG2B6GL"}
+        headers: {'apikey': apiKey}
       });
   }
 
-  const onClick = async () => {
+  const getAdjacencyList = async (currencies, date, apiKey) => {
     const adjacency_list = {}
-
     for (const currency1 of currencies) {
       var response;
 
       try {
-        response = await getRequest(currency1);
+        response = await getRequest(currency1, date, apiKey);
+        const current = response.data.rates;
+        console.log(response.data)
+        for (const currency2 of currencies) {
+          var value = -Math.log(current[currency2]);
+          value = value.toFixed(5);
+          if (currency2 !== currency1) {
+            if (currency1 in adjacency_list === false) {
+              adjacency_list[currency1] = [[currency2, value,]]
+            } else {
+              adjacency_list[currency1].push([currency2, value])
+            }
+          }
+        }
+
       } catch (error) {
           console.log(error);
       }
+    }
+    return adjacency_list;
 
-      const current = response.data.rates;
+  }
 
-      for (const currency2 of currencies) {
-        var value = Math.log(current[currency2]);
-        value = value.toFixed(5);
-        if (currency2 !== currency1) {
-          if (currency1 in adjacency_list === false) {
-            adjacency_list[currency1] = [[currency2, value,]]
-          } else {
-            adjacency_list[currency1].push([currency2, value])
-          }
-        }
+  const onClick = async () => {
+    console.log("check", apiKey, date)
+    setResult("Searching for an arbitrage path...");
+
+    const adjacency_list = await getAdjacencyList(currencies, date, apiKey)
+
+    for (const key in adjacency_list) {
+      for (const item of adjacency_list[key]) {
+          item[1] = parseFloat(item[1])
       }
     }
-
     console.log(adjacency_list);
 
-    const bf = bellmanFord(adjacency_list, "USD");
+    const cycle = bellmanFord(adjacency_list, "USD");
 
-    console.log(bf);
+    console.log(cycle);
 
-    if (bf !== null) {
-      const temp = getPath(bf[0], bf[1]);
-      setResult(temp);
-    } else {
-      setResult("Unfortunately, no arbitrage path between currencies could be found currently. Check back later!")
+    if (cycle !== null && cycle.length > 3) {
+      const output = getOutput(adjacency_list, cycle)
+      setResult(output[0]);
+      setPercentGain(output[1]);
+    } else if (Object.keys(adjacency_list).length === 0) {
+      setResult("Either the date you entered or your API key is not valid. Please try again.");
+    }
+    else {
+      setResult("Unfortunately, no arbitrage path between currencies could be found currently. Check back later!");
     }
   }
 
@@ -165,13 +218,39 @@ function App() {
         <h1>Foreign Exchange Arbitrage Finder</h1>
       </div>
       </Card>
-      <div style={{textAlign:"center"}}>
-        <Button
-            style={{marginTop: '2%', marginBottom: '2%', backgroundColor: '#3CB371', borderColor: '#3CB371'}}
-            onClick={onClick}
-        >
-          Search for Arbitrage
-        </Button>
+      <div className="content-container">
+            <div className="row">
+              <Form.Group style={{display: 'flex', width: '60%', height: '10vh', margin: 'auto', marginTop: '2%', marginBottom: '2%'}}>
+                <Form.Label style={{marginRight: '1%', margin: 'auto'}}>
+                  API Key:
+                </Form.Label>
+                <Form.Control
+                  type="text" 
+                  className="form-control" 
+                  placeholder="Enter in your API key"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  style={{marginRight: '1%', width: '50%', height: '6vh', margin: 'auto'}}
+                />
+                <Form.Label style={{marginRight: '1%', margin: 'auto'}}>
+                  Date:
+                </Form.Label>
+                <Form.Control
+                  type="text" 
+                  className="form-control" 
+                  placeholder="YYYY-MM-DD"
+                  defaultValue={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  style={{marginRight: '1%', width: '20%', height: '6vh', margin: 'auto'}}
+                />
+                <Button
+                    style={{marginTop: '2%', marginBottom: '2%', marginLeft: '1%', backgroundColor: '#3CB371', borderColor: '#3CB371', display: 'flex'}}
+                    onClick={onClick}
+                >
+                  Search
+                </Button>
+              </Form.Group>
+        </div>
       </div>
 
       <Card style={{width: '60%', margin: 'auto', textAlign: 'center', backgroundColor: '#3CB371', borderColor: '#3CB371', color: '#ffffff'}}>
@@ -181,15 +260,21 @@ function App() {
       </Card>
         
       <Card style={{width: '60%', margin: 'auto', textAlign: 'center'}}>
-        {result.length !== 0 ?
-        <p style={{marginTop: '1%'}}>
-          {result}
-        </p>
-        :
-        <p style={{marginTop: '1%'}}>
-          {"Press the button above to search for an arbitrage path if one exists."}
-        </p>
-        }
+        <div>
+          <p style={{marginTop: '1%'}}>
+            {result}
+          </p>
+          {result !== "Searching for an arbitrage path..." 
+            && result !== "Either the date you entered or your API key is not valid. Please try again." 
+            && result !== "Press the button above to search for an arbitrage path if one exists after entering in your API key and choosing a date." 
+            && result !== "Unfortunately, no arbitrage path between currencies could be found currently. Check back later!" ?
+              <p style={{marginTop: '1%'}}>
+                By following this arbitrage path, you will gain {percentGain}% profit.
+              </p>
+              : 
+              console.log()
+          }
+        </div>
       </Card>
 
     </div>
