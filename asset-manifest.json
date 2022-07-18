@@ -1,16 +1,15 @@
 {
   "files": {
     "main.css": "/forex-arbitrage-finder/static/css/main.073c9b0a.css",
-    "main.js": "/forex-arbitrage-finder/static/js/main.0c409801.js",
+    "main.js": "/forex-arbitrage-finder/static/js/main.04f2d51b.js",
     "static/js/787.677353c9.chunk.js": "/forex-arbitrage-finder/static/js/787.677353c9.chunk.js",
-    "static/media/logo.svg": "/forex-arbitrage-finder/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/forex-arbitrage-finder/index.html",
     "main.073c9b0a.css.map": "/forex-arbitrage-finder/static/css/main.073c9b0a.css.map",
-    "main.0c409801.js.map": "/forex-arbitrage-finder/static/js/main.0c409801.js.map",
+    "main.04f2d51b.js.map": "/forex-arbitrage-finder/static/js/main.04f2d51b.js.map",
     "787.677353c9.chunk.js.map": "/forex-arbitrage-finder/static/js/787.677353c9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.073c9b0a.css",
-    "static/js/main.0c409801.js"
+    "static/js/main.04f2d51b.js"
   ]
 }
